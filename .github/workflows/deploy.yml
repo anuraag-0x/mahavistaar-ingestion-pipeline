@@ -1,8 +1,9 @@
- name: Deploy HTML POC
+name: Deploy HTML POC
 
   on:
     push:
-      branches: [main]
+      branches:
+        - main
     workflow_dispatch:
 
   permissions:
@@ -16,7 +17,6 @@
     deploy:
       runs-on: [self-hosted, linux, x64, mahavistaar-poc]
       timeout-minutes: 5
-
       steps:
         - name: Request Dokploy deployment
           env:
@@ -26,15 +26,12 @@
           shell: bash
           run: |
             set -euo pipefail
-
             : "${DOKPLOY_URL:?Set DOKPLOY_URL}"
             : "${DOKPLOY_COMPOSE_ID:?Set DOKPLOY_COMPOSE_ID}"
             : "${DOKPLOY_API_KEY:?Set DOKPLOY_API_KEY}"
 
-            python3 -c 'import json, os; print(json.dumps({
-                "composeId": os.environ["DOKPLOY_COMPOSE_ID"],
-                "title": "GitHub Actions deployment"
-            }))' > "$RUNNER_TEMP/dokploy-request.json"
+            python3 -c 'import json, os; print(json.dumps({"composeId": os.environ["DOKPLOY_COMPOSE_ID"]}))' > "$RUNNER_TEMP/dokploy-
+            request.json"
 
             curl --fail --silent --show-error \
               --connect-timeout 10 --max-time 60 \

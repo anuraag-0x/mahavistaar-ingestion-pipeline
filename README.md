@@ -1,65 +1,59 @@
-# MahaVistaar Document Ingestion & Search Platform
+# Mahavistaar HTML deployment POC
 
-An enterprise, review-driven document ingestion, multilingual translation, semantic chunking, and vector search platform built around **PostgreSQL**, **Qdrant**, **MinIO**, **FastAPI**, and **Next.js**.
+One static HTML page served by Nginx. No application secrets, database,
+Node.js installation, registry account, or build-time environment variables.
 
----
+## Upload to GitHub
 
-## Docker deployment
+Upload the contents of this folder to the root of your personal repository
+and commit to `main`. The repository root should contain `index.html`,
+`Dockerfile`, `docker-compose.yml`, `.dockerignore`, `.env`, `.env.example`,
+and this README. Both environment files contain only a non-secret port setting.
+The Dockerfile copies only `index.html`; deployment also works if your
+browser does not include the hidden `.dockerignore` file.
 
-Use the existing PostgreSQL server and start the application stack with:
+## Deploy through Dokploy
+
+1. On the server, check that TCP port 9081 is free:
+
+   ```bash
+   sudo ss -ltnp | grep -E ':9081\b'
+   ```
+
+   No matching output means no TCP listener was found. If occupied, choose
+   a free port and set `POC_HTTP_PORT` in the Compose service Environment tab.
+2. Open the `mahavistaar-poc` Compose service in Dokploy.
+3. Choose Docker Compose mode and the GitHub source.
+4. Select `anuraag-0x/mahavistaar-ingestion-pipeline`, branch `main`, and
+   Compose path `./docker-compose.yml`.
+5. Replace any old application environment variables in this POC service
+   with the contents of the supplied `.env`:
+
+   ```dotenv
+   POC_HTTP_PORT=9081
+   ```
+
+   Dokploy can generate its own `.env`, so set this in its Environment tab
+   even if you uploaded the file. Leave Auto Deploy disabled for the first test.
+6. Save and click Deploy. Inspect the deployment log for success.
+7. Open `http://192.168.69.67:9081` from a machine that can reach the server.
+   Use your chosen port if you changed `POC_HTTP_PORT`.
+
+This POC publishes its own HTTP port directly. It does not need a Dokploy
+domain, Traefik routing, or HTTPS configuration. The dashboard remains on
+port 3100; Traefik's ports 9080 and 9443 are separate.
+
+If the page cannot be reached, test on the server first:
 
 ```bash
-docker compose up -d --build --wait --wait-timeout 300
+curl -I http://127.0.0.1:9081
 ```
 
-Complete the one-time `.env` setup in [the deployment guide](docs/DEPLOYMENT.md)
-first. The MinIO console is exposed on port **9001**.
+## Test an update
 
-## 1. Subproject Documentation
+Change `Version 1.0` in `index.html` to `Version 1.1`, commit to `main`,
+and click Deploy again. Refresh the browser to verify the new version.
 
-The repository is organized into distinct subprojects. Refer to the specific README in each directory:
-
-- **[Architecture Overview & High-Level Design (`docs/ARCHITECTURE_OVERVIEW.md`)](docs/ARCHITECTURE_OVERVIEW.md):** 4-Layer presentation diagram, plain-English core flows, hexagonal architecture, and technology stack summary.
-- **[Backend Flow (`docs/BACKEND_FLOW.md`)](docs/BACKEND_FLOW.md):** Step-by-step backend processing and two-tier DEV/PROD publishing flow.
-- **[Frontend Operator Console (`frontend/README.md`)](frontend/README.md):** Next.js 15 App Router operator console with Keycloak SSO, live PDF preview, OCR Markdown editing, translation review, and chunk inspection.
-- **[PostgreSQL Backend API (`backend/README.md`)](backend/README.md):** Redesigned FastAPI service with SQLAlchemy 2.0, Alembic migrations, hexagonal ports & adapters, interactive Swagger UI, and pure PostgreSQL persistence.
-
----
-
-## 2. Repository Layout
-
-```text
-mahavistaar-ingestion-pipeline/
-├── frontend/                     # Next.js 15 Operator Console
-├── backend/                      # Pure PostgreSQL-backed FastAPI backend
-│   ├── app/                      # API routers, models, schemas, ports, adapters, services
-│   ├── migrations/               # Alembic database migrations
-│   ├── alembic.ini
-│   ├── Dockerfile
-│   └── requirements.txt
-├── .env                          # Local environment configuration
-└── README.md                     # Root project documentation
-```
-
----
-
-## 3. Platform Architecture & Service Ports
-
-| Service | Port | Description | Documentation |
-| :--- | :--- | :--- | :--- |
-| **Frontend UI** | `3000` | Next.js operator console | [`frontend/README.md`](frontend/README.md) |
-| **Backend API** | `8002` | FastAPI document ingestion & search API | [`backend/README.md`](backend/README.md) |
-| **Keycloak SSO** | `8181` | Authentication & RBAC identity provider | Existing local Keycloak instance |
-| **PostgreSQL** | `5432` / `5434` | Relational document state & audit persistence | [`backend/README.md`](backend/README.md) |
-| **Qdrant** | `6333` | Vector database for semantic chunk retrieval | [`backend/README.md`](backend/README.md) |
-| **MinIO** | `9000` / `9001` | Object storage (original uploads & artifacts) | [`backend/README.md`](backend/README.md) |
-
----
-
-## 4. Interactive API Documentation (Swagger & ReDoc)
-
-When the backend service is running, explore interactive OpenAPI specifications at:
-
-* **Backend Swagger UI:** [http://localhost:8002/docs](http://localhost:8002/docs)
-* **Backend ReDoc:** [http://localhost:8002/redoc](http://localhost:8002/redoc)
-* **Backend OpenAPI JSON Schema:** [http://localhost:8002/openapi.json](http://localhost:8002/openapi.json)
+Manual deployment verifies GitHub fetching and server builds. Automatic
+deployment is a separate step: GitHub webhooks cannot directly reach this
+private server address without additional connectivity.

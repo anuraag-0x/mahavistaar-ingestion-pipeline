@@ -1,0 +1,62 @@
+{
+  "realm": "docs-pipeline",
+  "enabled": true,
+  "registrationAllowed": false,
+  "roles": {
+    "realm": [
+      {
+        "name": "admin"
+      },
+      {
+        "name": "super_admin"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "docs-pipeline-ui",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": [
+        "${APP_ORIGIN}/auth/sso-callback"
+      ],
+      "webOrigins": [
+        "${APP_ORIGIN}"
+      ],
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "roles",
+        "profile",
+        "email"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
+    }
+  ],
+  "users": [
+    {
+      "username": "${APP_ADMIN_USERNAME}",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${APP_ADMIN_PASSWORD}",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "super_admin"
+      ],
+      "firstName": "Pipeline",
+      "lastName": "Administrator",
+      "email": "${APP_ADMIN_EMAIL}"
+    }
+  ],
+  "sslRequired": "none"
+}
